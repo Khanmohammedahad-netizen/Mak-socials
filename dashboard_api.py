@@ -4,6 +4,7 @@ import time
 import threading
 import asyncio
 import glob
+from functools import wraps
 from datetime import datetime
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
@@ -13,9 +14,27 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from engine.scheduler import ViralEngine
 from engine.lib.title_optimizer import generate_optimized_title
 from engine.utils.logger import logger
+from src.core.config import settings
 
 app = Flask(__name__)
 CORS(app)
+
+
+def require_bearer_token(view):
+    """Guards /api/* routes. HTML routes (the dashboard page itself) stay
+    open for localhost use — only the API surface (including
+    /api/run-now, which triggers a real pipeline run + YouTube upload)
+    requires the token."""
+
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        auth = request.headers.get("Authorization", "")
+        expected = f"Bearer {settings.mak_dashboard_token}"
+        if auth != expected:
+            return jsonify({"error": "unauthorized"}), 401
+        return view(*args, **kwargs)
+
+    return wrapped
 
 # Constants
 OUTPUT_DIR = "output"
@@ -48,10 +67,12 @@ def dashboard():
     return send_file('MAK_Socials_Dashboard.html')
 
 @app.route('/api/status', methods=['GET'])
+@require_bearer_token
 def status():
     return jsonify(get_engine_status())
 
 @app.route('/api/videos')
+@require_bearer_token
 def list_videos():
     videos = []
     
@@ -113,6 +134,7 @@ def list_videos():
     return jsonify(videos)
 
 @app.route('/api/regenerate-title', methods=['POST'])
+@require_bearer_token
 def regenerate_title():
     data = request.json
     video_id = data.get('video_id')
@@ -153,6 +175,7 @@ def regenerate_title():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/logs', methods=['GET'])
+@require_bearer_token
 def get_logs():
     limit = request.args.get('limit', default=50, type=int)
     log_files = glob.glob(os.path.join("output", "logs", "*.log"))
@@ -176,6 +199,7 @@ def get_logs():
     return jsonify(lines[::-1])
 
 @app.route('/api/run-now', methods=['POST'])
+@require_bearer_token
 def run_now():
     def background_run():
         loop = asyncio.new_event_loop()
@@ -187,20 +211,26 @@ def run_now():
     return jsonify({"started": True, "message": "Pipeline triggered"})
 
 @app.route('/api/engine/toggle', methods=['POST'])
+@require_bearer_token
 def toggle_engine():
     # Toggle logic...
     return jsonify({"success": True})
 
 if __name__ == "__main__":
-    if engine.config['scheduling'].get('enabled', True):
+    if not settings.enable_legacy_autopublish:
+        logger.info(
+            f"job '{job_id}' disabled by flag "
+            "(ENABLE_LEGACY_AUTOPUBLISH=False) - not registered."
+        )
+    elif engine.config['scheduling'].get('enabled', True):
         interval = engine.config['scheduling']['interval_hours']
         scheduler.add_job(
-            lambda: asyncio.run(engine.run_pipeline()), 
-            'interval', 
-            hours=interval, 
+            lambda: asyncio.run(engine.run_pipeline()),
+            'interval',
+            hours=interval,
             id=job_id
         )
         scheduler.start()
         logger.info(f"Background scheduler started (interval: {interval}h)")
 
-    app.run(port=5050, debug=False)
+    app.run(host="127.0.0.1", port=5050, debug=False)

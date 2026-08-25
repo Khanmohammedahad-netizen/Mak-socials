@@ -1,0 +1,16 @@
+line-length = 100
+target-version = "py311"
+
+exclude = [
+    "venv311",
+    "legacy",
+    "dashboard/frontend",
+    "dashboard/backend",
+    "output",
+    "assets",
+    "migrations/versions",
+]
+
+[lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]

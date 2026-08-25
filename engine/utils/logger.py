@@ -3,6 +3,8 @@ import colorlog
 import os
 from datetime import datetime
 
+from src.core.logging import install_redaction_filter
+
 def setup_logger(name: str = "engine"):
     """Sets up a structured logger with both console and file output."""
     logger = logging.getLogger(name)
@@ -46,6 +48,8 @@ def setup_logger(name: str = "engine"):
 
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
+    install_redaction_filter(logger)
+    install_redaction_filter()  # also cover root, for basicConfig/third-party use
 
     return logger
 

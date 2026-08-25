@@ -13,3 +13,8 @@ python-dotenv
 colorlog
 pydub
 numpy
+flask
+flask-cors
+pydantic-settings
+sqlalchemy
+alembic

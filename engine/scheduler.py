@@ -19,6 +19,7 @@ from engine.lib.title_optimizer import generate_optimized_title
 from engine.uploader.youtube_uploader import YouTubeUploader
 from engine.uploader.instagram_uploader import InstagramUploader
 from engine.uploader.snapchat_emailer import SnapchatEmailer
+from src.core.config import settings
 
 class ViralEngine:
     def __init__(self, config_path: str = "config/config.yaml"):
@@ -188,18 +189,25 @@ class ViralEngine:
             json.dump(logs, f, indent=2)
 
 def start_scheduler():
+    if not settings.enable_legacy_autopublish:
+        logger.info(
+            "job 'legacy_autopublish' disabled by flag "
+            "(ENABLE_LEGACY_AUTOPUBLISH=False) - not registered."
+        )
+        return
+
     engine = ViralEngine()
     scheduler = BackgroundScheduler()
-    
+
     interval = engine.config['scheduling']['interval_hours']
     logger.info(f"Starting scheduler: Running every {interval} hours.")
-    
+
     def job():
         asyncio.run(engine.run_pipeline())
-        
-    scheduler.add_job(job, 'interval', hours=interval)
+
+    scheduler.add_job(job, 'interval', hours=interval, id="legacy_autopublish")
     scheduler.start()
-    
+
     try:
         while True:
             time.sleep(1)
