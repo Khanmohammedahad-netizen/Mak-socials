@@ -1,0 +1,15 @@
+edge-tts
+openai-whisper
+moviepy==1.0.3
+ffmpeg-python
+ollama
+apscheduler
+google-api-python-client
+google-auth-oauthlib
+requests
+Pillow
+PyYAML
+python-dotenv
+colorlog
+pydub
+numpy

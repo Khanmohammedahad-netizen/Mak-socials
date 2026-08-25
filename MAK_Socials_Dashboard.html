@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAK Socials — Content Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08080A;
+    --bg-card: #0F0F12;
+    --bg-hover: #141418;
+    --gold: #E8C97A;
+    --gold-dim: #A8893A;
+    --gold-glow: rgba(232,201,122,0.08);
+    --border: rgba(232,201,122,0.12);
+    --border-strong: rgba(232,201,122,0.25);
+    --text: #F0EAD6;
+    --text-muted: #7A7060;
+    --text-dim: #3A3428;
+    --green: #4CAF7D;
+    --red: #C0392B;
+    --amber: #E8A030;
+    --blue: #5B8DD9;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grain texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .shell { position: relative; z-index: 1; display: flex; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    min-height: 100vh;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 32px 0;
+    flex-shrink: 0;
+    background: rgba(8,8,10,0.8);
+    backdrop-filter: blur(20px);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+
+  .logo {
+    padding: 0 24px 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-mark {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+  .logo-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .nav { padding: 24px 0; flex: 1; }
+  .nav-label {
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0 24px;
+    margin-bottom: 8px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 24px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 400;
+    transition: all 0.2s;
+    border-left: 2px solid transparent;
+  }
+  .nav-item:hover { color: var(--text); background: var(--gold-glow); }
+  .nav-item.active { color: var(--gold); border-left-color: var(--gold); background: var(--gold-glow); }
+  .nav-icon { font-size: 14px; width: 16px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 20px 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ENGINE STATUS in sidebar */
+  .engine-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .engine-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+  .engine-dot.off { background: var(--text-dim); box-shadow: none; animation: none; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* MAIN */
+  .main { flex: 1; padding: 40px 48px; overflow-y: auto; }
+
+  /* PAGE HEADER */
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 40px;
+  }
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1;
+  }
+  .page-date {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--border-strong); }
+  .stat-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .stat-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 34px;
+    font-weight: 400;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .stat-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ENGINE CONTROL */
+  .control-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .control-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+  }
+  .control-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .control-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid;
+    letter-spacing: 0.03em;
+  }
+  .btn-gold {
+    background: var(--gold);
+    color: #08080A;
+    border-color: var(--gold);
+  }
+  .btn-gold:hover { background: #F0D590; }
+  .btn-outline {
+    background: transparent;
+    color: var(--text-muted);
+    border-color: var(--border-strong);
+  }
+  .btn-outline:hover { color: var(--text); border-color: var(--gold-dim); }
+  .btn-danger {
+    background: transparent;
+    color: #E05555;
+    border-color: rgba(192,57,43,0.35);
+  }
+  .btn-danger:hover { background: rgba(192,57,43,0.08); }
+
+  /* PLATFORM STATUS */
+  .platform-row { display: flex; gap: 12px; }
+  .platform-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 12px;
+  }
+  .platform-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot-amber { background: var(--amber); }
+  .dot-muted { background: var(--text-dim); }
+
+  /* SCHEDULE DISPLAY */
+  .schedule-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .schedule-bar span.next { color: var(--gold); }
+
+  /* PROGRESS BAR */
+  .progress-wrap { margin-top: 14px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+  .progress-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+
+  /* SECTION HEADER */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .filter-row { display: flex; gap: 8px; }
+  .filter-btn {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .filter-btn:hover { color: var(--text); border-color: var(--border-strong); }
+  .filter-btn.active { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-glow); }
+
+  /* VIDEO GRID */
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 18px;
+  }
+
+  .video-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all 0.25s;
+    cursor: pointer;
+  }
+  .video-card:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+  }
+
+  .video-thumb {
+    width: 100%;
+    aspect-ratio: 9/16;
+    position: relative;
+    background: #0A0A0E;
+    overflow: hidden;
+    max-height: 200px;
+  }
+  .video-thumb-bg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    background: linear-gradient(135deg, #0F0F18, #151520);
+    position: relative;
+  }
+  .video-thumb-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(8,8,10,0.9) 0%, transparent 50%);
+  }
+  .video-duration {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(8,8,10,0.85);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .video-status-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .badge-published { background: rgba(76,175,125,0.15); color: var(--green); border: 1px solid rgba(76,175,125,0.25); }
+  .badge-draft { background: rgba(232,160,48,0.12); color: var(--amber); border: 1px solid rgba(232,160,48,0.2); }
+  .badge-pending { background: rgba(91,141,217,0.12); color: var(--blue); border: 1px solid rgba(91,141,217,0.2); }
+  .badge-failed { background: rgba(192,57,43,0.12); color: #E05555; border: 1px solid rgba(192,57,43,0.2); }
+  .badge-ai { background: rgba(232,201,122,0.15); color: var(--gold); border: 1px solid var(--border-strong); }
+
+  .video-info { padding: 14px 16px; }
+  .video-title {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.4;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .video-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .video-platforms {
+    display: flex;
+    gap: 5px;
+  }
+  .platform-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+  }
+  .pi-yt { background: rgba(255,0,0,0.15); color: #FF4444; }
+  .pi-ig { background: rgba(200,80,180,0.15); color: #D060C0; }
+  .pi-sc { background: rgba(255,220,0,0.12); color: #C8A800; }
+
+  .video-actions {
+    display: flex;
+    gap: 6px;
+    padding: 0 16px 14px;
+  }
+  .action-btn {
+    flex: 1;
+    padding: 6px;
+    border-radius: 5px;
+    font-size: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+    text-align: center;
+  }
+  .action-btn:hover { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-glow); }
+  .action-btn.primary { color: var(--gold); border-color: var(--gold-dim); }
+
+  /* LOG PANEL */
+  .log-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    margin-top: 32px;
+  }
+  .log-entries { margin-top: 16px; }
+  .log-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .log-entry:last-child { border-bottom: none; }
+  .log-time { color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 10px; min-width: 70px; padding-top: 1px; }
+  .log-level { font-size: 9px; letter-spacing: 0.1em; padding: 2px 6px; border-radius: 3px; min-width: 44px; text-align: center; }
+  .log-info { background: rgba(91,141,217,0.1); color: var(--blue); }
+  .log-success { background: rgba(76,175,125,0.1); color: var(--green); }
+  .log-warn { background: rgba(232,160,48,0.1); color: var(--amber); }
+  .log-error { background: rgba(192,57,43,0.1); color: #E05555; }
+  .log-msg { color: var(--text-muted); line-height: 1.5; flex: 1; }
+  .log-msg strong { color: var(--text); font-weight: 400; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(8,8,10,0.85);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 32px 36px;
+    width: 420px;
+    max-width: 90vw;
+  }
+  .modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .modal-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
+  .modal-detail { font-size: 12px; color: var(--text-muted); line-height: 1.7; margin-bottom: 20px; }
+  .modal-detail strong { color: var(--gold); font-weight: 400; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* TOAST */
+  .toast-wrap {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+  }
+  .toast {
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-left: 3px solid var(--gold);
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--text);
+    pointer-events: all;
+    animation: slideIn 0.3s ease;
+    max-width: 300px;
+  }
+  .toast.success { border-left-color: var(--green); }
+  .toast.error { border-left-color: #E05555; }
+  @keyframes slideIn { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* DIVIDER */
+  .gold-line {
+    width: 40px;
+    height: 1px;
+    background: var(--gold-dim);
+    margin: 4px 0 12px;
+  }
+
+  /* NEXT RUN COUNTDOWN */
+  .countdown {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    margin: 8px 0 4px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.4s ease both; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">MAK Socials</div>
+      <div class="logo-sub">Content Engine v1</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">Control</div>
+      <div class="nav-item active" onclick="showPage('dashboard')">
+        <span class="nav-icon">◈</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('library')">
+        <span class="nav-icon">◫</span> Video Library
+      </div>
+      <div class="nav-item" onclick="showPage('schedule')">
+        <span class="nav-icon">◷</span> Schedule
+      </div>
+      <div class="nav-label" style="margin-top:20px">System</div>
+      <div class="nav-item" onclick="showPage('logs')">
+        <span class="nav-icon">≡</span> Activity Log
+      </div>
+      <div class="nav-item" onclick="showPage('settings')">
+        <span class="nav-icon">◉</span> Settings
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="engine-badge">
+        <div class="engine-dot" id="sidebar-dot"></div>
+        <span id="sidebar-status">Engine running</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- DASHBOARD PAGE -->
+    <div id="page-dashboard" class="fade-in">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Command Centre</div>
+          <div class="page-date" id="current-date">—</div>
+        </div>
+        <button class="btn btn-gold" onclick="runNow()">▶ Run Now</button>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Videos Made</div>
+          <div class="stat-value" id="stat-total">12</div>
+          <div class="stat-sub">All time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Published</div>
+          <div class="stat-value" id="stat-published">9</div>
+          <div class="stat-sub">Across platforms</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">In Draft</div>
+          <div class="stat-value" id="stat-draft">2</div>
+          <div class="stat-sub">Ready to publish</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Next Run</div>
+          <div class="countdown" id="countdown">3:47:22</div>
+          <div class="stat-sub">Auto-scheduled</div>
+        </div>
+      </div>
+
+      <!-- CONTROLS -->
+      <div class="control-row">
+        <div class="control-card">
+          <div class="control-title">Engine Control</div>
+          <div class="gold-line"></div>
+          <div class="control-sub">Manage the 4-hour automation scheduler</div>
+          <div class="btn-row">
+            <button class="btn btn-gold" id="engine-toggle-btn" onclick="toggleEngine()">⏹ Stop Engine</button>
+            <button class="btn btn-outline" onclick="runNow()">▶ Run Once</button>
+            <button class="btn btn-danger" onclick="confirmReset()">↺ Reset</button>
+          </div>
+          <div class="schedule-bar">
+            <span>Next cycle:</span>
+            <span class="next" id="next-run-time">—</span>
+            <span style="margin-left:auto; color: var(--text-dim)">Every 4 hrs</span>
+          </div>
+        </div>
+
+        <div class="control-card">
+          <div class="control-title">Platform Status</div>
+          <div class="gold-line"></div>
+          <div class="control-sub">Auto-publishing targets</div>
+          <div class="platform-row">
+            <div class="platform-pill">
+              <div class="platform-dot dot-green"></div>
+              <span style="font-size:11px; color:var(--text)">YouTube</span>
+            </div>
+            <div class="platform-pill">
+              <div class="platform-dot dot-green"></div>
+              <span style="font-size:11px; color:var(--text)">Instagram</span>
+            </div>
+            <div class="platform-pill">
+              <div class="platform-dot dot-amber"></div>
+              <span style="font-size:11px; color:var(--text)">Snapchat</span>
+              <span style="font-size:9px; color:var(--text-muted)">(email)</span>
+            </div>
+          </div>
+          <div class="progress-wrap" style="margin-top:20px">
+            <div class="progress-label">
+              <span>Daily quota used</span>
+              <span id="quota-label">3 / 6 uploads</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="quota-bar" style="width:50%"></div>
+            </div>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-label">
+              <span>Today's cycle</span>
+              <span id="cycle-label">Cycle 2 of 6</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" style="width:33%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECENT VIDEOS (preview) -->
+      <div class="section-header">
+        <div class="section-title">Recent Videos</div>
+        <button class="btn btn-outline" onclick="showPage('library')">View all →</button>
+      </div>
+      <div class="video-grid" id="recent-grid"></div>
+    </div>
+
+    <!-- LIBRARY PAGE -->
+    <div id="page-library" class="hidden fade-in">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Video Library</div>
+          <div class="page-date">All generated content</div>
+        </div>
+        <button class="btn btn-gold" onclick="runNow()">+ Generate New</button>
+      </div>
+      <div class="section-header">
+        <div class="filter-row" id="filter-row">
+          <button class="filter-btn active" onclick="filterVideos('all', this)">All</button>
+          <button class="filter-btn" onclick="filterVideos('published', this)">Published</button>
+          <button class="filter-btn" onclick="filterVideos('draft', this)">Draft</button>
+          <button class="filter-btn" onclick="filterVideos('pending', this)">Pending</button>
+          <button class="filter-btn" onclick="filterVideos('failed', this)">Failed</button>
+        </div>
+      </div>
+      <div class="video-grid" id="library-grid"></div>
+    </div>
+
+    <!-- SCHEDULE PAGE -->
+    <div id="page-schedule" class="hidden fade-in">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Schedule</div>
+          <div class="page-date">Upcoming automation cycles</div>
+        </div>
+      </div>
+      <div class="control-card" style="margin-bottom:20px">
+        <div class="control-title">Today's Run Plan</div>
+        <div class="gold-line"></div>
+        <div id="schedule-list" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- LOGS PAGE -->
+    <div id="page-logs" class="hidden fade-in">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Activity Log</div>
+          <div class="page-date">System events & pipeline runs</div>
+        </div>
+        <button class="btn btn-outline" onclick="clearLogs()">Clear</button>
+      </div>
+      <div class="log-panel">
+        <div class="log-entries" id="full-log"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div id="page-settings" class="hidden fade-in">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Settings</div>
+          <div class="page-date">Engine configuration</div>
+        </div>
+      </div>
+      <div class="control-row">
+        <div class="control-card">
+          <div class="control-title">Pipeline Config</div>
+          <div class="gold-line"></div>
+          <div style="display:flex; flex-direction:column; gap:16px; margin-top:4px">
+            <div>
+              <div class="stat-label" style="margin-bottom:6px">Interval (hours)</div>
+              <div style="display:flex; align-items:center; gap:10px">
+                <input type="range" min="1" max="12" value="4" id="interval-slider" oninput="updateInterval(this.value)" style="flex:1">
+                <span class="stat-label" id="interval-val" style="color:var(--gold); min-width:30px">4h</span>
+              </div>
+            </div>
+            <div>
+              <div class="stat-label" style="margin-bottom:6px">Niche</div>
+              <select style="width:100%; padding:8px 12px; background:var(--bg); border:1px solid var(--border); color:var(--text); border-radius:6px; font-family:'DM Sans',sans-serif; font-size:12px">
+                <option>Reddit Mystery / Betrayal</option>
+                <option>True Crime</option>
+                <option>AITA Drama</option>
+                <option>Dark Secrets</option>
+                <option>Supernatural Encounters</option>
+              </select>
+            </div>
+            <div>
+              <div class="stat-label" style="margin-bottom:6px">TTS Voice</div>
+              <select style="width:100%; padding:8px 12px; background:var(--bg); border:1px solid var(--border); color:var(--text); border-radius:6px; font-family:'DM Sans',sans-serif; font-size:12px">
+                <option>en-US-ChristopherNeural (Deep, dramatic)</option>
+                <option>en-US-GuyNeural (Energetic)</option>
+                <option>en-US-EricNeural (Warm)</option>
+                <option>Random each video</option>
+              </select>
+            </div>
+            <button class="btn btn-gold" style="align-self:flex-start" onclick="toast('Settings saved', 'success')">Save Changes</button>
+          </div>
+        </div>
+        <div class="control-card">
+          <div class="control-title">Platform Toggles</div>
+          <div class="gold-line"></div>
+          <div style="display:flex; flex-direction:column; gap:16px">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--bg); border-radius:8px; border:1px solid var(--border)">
+              <div>
+                <div style="font-size:13px; color:var(--text)">YouTube Shorts</div>
+                <div style="font-size:10px; color:var(--text-muted)">Direct API upload</div>
+              </div>
+              <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--bg); border-radius:8px; border:1px solid var(--border)">
+              <div>
+                <div style="font-size:13px; color:var(--text)">Instagram Reels</div>
+                <div style="font-size:10px; color:var(--text-muted)">Graph API</div>
+              </div>
+              <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--bg); border-radius:8px; border:1px solid var(--border)">
+              <div>
+                <div style="font-size:13px; color:var(--text)">Snapchat (Email)</div>
+                <div style="font-size:10px; color:var(--text-muted)">SMTP delivery</div>
+              </div>
+              <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Confirm Action</div>
+    <div class="modal-sub" id="modal-sub">This cannot be undone.</div>
+    <div class="modal-detail" id="modal-detail"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold" id="modal-confirm-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIDEO DETAIL MODAL -->
+<div class="modal-overlay" id="video-modal">
+  <div class="modal" style="width:480px">
+    <div class="modal-title" id="vmodal-title">Video Title</div>
+    <div class="modal-sub" id="vmodal-meta">—</div>
+    <div id="vmodal-body" style="margin-bottom:20px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeVideoModal()">Close</button>
+      <button class="btn btn-outline" id="vmodal-regen-btn">↻ AI Title</button>
+      <button class="btn btn-outline" id="vmodal-publish-btn">Publish Now</button>
+      <button class="btn btn-gold" id="vmodal-open-btn">Open Folder</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<style>
+.toggle-switch {
+  width: 36px; height: 20px;
+  border-radius: 10px;
+  background: var(--border);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  top: 2px; left: 2px;
+  transition: all 0.2s;
+}
+.toggle-switch.active { background: var(--gold-glow); border-color: var(--gold-dim); }
+.toggle-switch.active::after { background: var(--gold); left: 18px; }
+</style>
+
+<div id="offline-banner" style="display:none; position:fixed; top:0; left:0; right:0; background:rgba(192,57,43,0.9); color:white; text-align:center; padding:8px; font-size:12px; z-index:1000; backdrop-filter:blur(5px); border-bottom:1px solid rgba(255,255,255,0.1)">
+  API Offline — Showing Demo Data
+</div>
+
+<script>
+const API_BASE = 'http://localhost:5050/api';
+let VIDEOS = [];
+let LOGS = [];
+
+const MOCK_VIDEOS = [
+  { id: 1, title: "I Inherited His House (Demo)", variant: "dark_secret_revealed", status: "published", duration: "0:47", voice: "ChristopherNeural", platforms: ["yt","ig","sc"], created: "2026-03-29 15:41", yt_id: "abc123" },
+  { id: 2, title: "My Wife's Secret (Demo)", variant: "family_drama", status: "published", duration: "0:52", voice: "ChristopherNeural", platforms: ["yt","ig"], created: "2026-03-29 11:41", yt_id: "def456" }
+];
+
+const MOCK_LOGS = [
+  { time: "15:41:28", level: "success", msg: "Demo: Pipeline complete" },
+  { time: "15:39:18", level: "info", msg: "Demo: System heartbeat" }
+];
+
+const NICHES = { betrayal_revenge: "Betrayal", dark_secret_revealed: "Dark Secret", family_drama: "Family Drama", supernatural_encounter: "Supernatural", caught_cheating: "Caught Cheating" };
+const NICHE_EMOJIS = { betrayal_revenge: "🔪", dark_secret_revealed: "🔐", family_drama: "👨‍👩‍👧", supernatural_encounter: "👁", caught_cheating: "📱" };
+
+let engineRunning = true;
+let currentFilter = 'all';
+let nextRunDate = new Date(Date.now() + 3 * 3600000 + 47 * 60000 + 22000);
+
+function showPage(id) {
+  document.querySelectorAll('[id^="page-"]').forEach(p => p.classList.add('hidden'));
+  document.getElementById('page-' + id).classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+function makeVideoCard(v, compact=false) {
+  const emoji = NICHE_EMOJIS[v.variant] || '🎬';
+  const statusMap = { published: 'badge-published', draft: 'badge-draft', pending: 'badge-pending', failed: 'badge-failed' };
+  const platforms = v.platforms.map(p => `<div class="platform-icon pi-${p}">${p === 'yt' ? 'YT' : p === 'ig' ? 'IG' : 'SC'}</div>`).join('');
+  return `
+    <div class="video-card" onclick="openVideo('${v.id}')">
+      <div class="video-thumb">
+        <div class="video-thumb-bg">${emoji}<div class="video-thumb-overlay"></div></div>
+        <div class="video-duration">${v.duration}</div>
+        <div class="video-status-badge ${statusMap[v.status]}">${v.status}</div>
+        ${v.is_ai_title ? `<div class="video-status-badge badge-ai" style="top: 32px">AI TITLE</div>` : ''}
+      </div>
+      <div class="video-info">
+        <div class="video-title">${v.title}</div>
+        <div class="video-meta">
+          <span>${v.created.split(' ')[0]}</span>
+          <div class="video-platforms">${platforms}</div>
+        </div>
+      </div>
+      <div class="video-actions">
+        ${v.status === 'draft' || v.status === 'pending' ? `<button class="action-btn primary" onclick="event.stopPropagation(); publishVideo(${v.id})">Publish</button>` : ''}
+        ${v.status === 'published' ? `<button class="action-btn" onclick="event.stopPropagation()">YT Link</button>` : ''}
+        <button class="action-btn" onclick="event.stopPropagation(); openVideo(${v.id})">Details</button>
+      </div>
+    </div>`;
+}
+
+function renderRecent() {
+  const grid = document.getElementById('recent-grid');
+  grid.innerHTML = VIDEOS.slice(0, 6).map(v => makeVideoCard(v)).join('');
+}
+
+function renderLibrary(filter='all') {
+  const grid = document.getElementById('library-grid');
+  const filtered = filter === 'all' ? VIDEOS : VIDEOS.filter(v => v.status === filter);
+  grid.innerHTML = filtered.map(v => makeVideoCard(v)).join('');
+}
+
+function renderLogs(target) {
+  const el = document.getElementById(target);
+  el.innerHTML = LOGS.map(l => `
+    <div class="log-entry">
+      <span class="log-time">${l.time}</span>
+      <span class="log-level log-${l.level}">${l.level.toUpperCase()}</span>
+      <span class="log-msg">${l.msg}</span>
+    </div>`).join('');
+}
+
+function renderSchedule() {
+  const now = new Date();
+  const list = document.getElementById('schedule-list');
+  let html = '';
+  for (let i = 0; i < 6; i++) {
+    const t = new Date(now);
+    t.setHours(Math.floor(i * 4), 0, 0, 0);
+    const past = t < now;
+    html += `<div style="display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid var(--border)">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:${past ? 'var(--text-dim)' : 'var(--gold)'}; min-width:55px">${t.toTimeString().slice(0,5)}</span>
+      <div class="platform-dot ${past ? 'dot-muted' : 'dot-green'}" style="${past ? '' : 'box-shadow:0 0 6px var(--green)'}"></div>
+      <span style="font-size:12px; color:${past ? 'var(--text-dim)' : 'var(--text)'}">Cycle ${i+1} — ${past ? 'Complete' : 'Scheduled'}</span>
+      ${past ? `<span style="margin-left:auto; font-size:10px; color:var(--green)">✓ Done</span>` : `<span style="margin-left:auto; font-size:10px; color:var(--text-muted)">Waiting</span>`}
+    </div>`;
+  }
+  list.innerHTML = html;
+}
+
+function filterVideos(filter, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = filter;
+  renderLibrary(filter);
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = VIDEOS.length;
+  document.getElementById('stat-published').textContent = VIDEOS.filter(v => v.status === 'published').length;
+  document.getElementById('stat-draft').textContent = VIDEOS.filter(v => v.status === 'draft').length;
+}
+
+async function toggleEngine() {
+  try {
+    const res = await fetch(`${API_BASE}/engine/toggle`, { method: 'POST' });
+    const data = await res.json();
+    engineRunning = data.engine_running;
+    
+    const btn = document.getElementById('engine-toggle-btn');
+    const dot = document.getElementById('sidebar-dot');
+    const status = document.getElementById('sidebar-status');
+    
+    if (engineRunning) {
+      btn.textContent = '⏹ Stop Engine';
+      btn.className = 'btn btn-gold';
+      dot.classList.remove('off');
+      status.textContent = 'Engine running';
+      toast('Engine started', 'success');
+    } else {
+      btn.textContent = '▶ Start Engine';
+      btn.className = 'btn btn-outline';
+      dot.classList.add('off');
+      status.textContent = 'Engine paused';
+      toast('Engine paused', 'error');
+    }
+  } catch (e) {
+    toast('API disconnected', 'error');
+  }
+}
+
+async function runNow() {
+  try {
+    toast('Pipeline triggered...');
+    const res = await fetch('http://localhost:5050/api/run-now', { method: 'POST' });
+    const data = await res.json();
+    if (data.started === true) {
+      toast('Pipeline started successfully', 'success');
+      setTimeout(loadLiveData, 2000);
+    }
+  } catch (e) {
+    console.error('Run Now failed:', e);
+    toast('Could not reach engine (Network Error)', 'error');
+  }
+}
+
+function openVideo(id) {
+  const v = VIDEOS.find(x => x.id === id);
+  document.getElementById('vmodal-title').textContent = v.title;
+  document.getElementById('vmodal-meta').textContent = `${v.variant.replace(/_/g,' ')} · ${v.voice} · ${v.duration} · ${v.created}`;
+  const statusMap = { published: 'badge-published', draft: 'badge-draft', pending: 'badge-pending', failed: 'badge-failed' };
+  document.getElementById('vmodal-body').innerHTML = `
+    <div style="display:flex; flex-direction:column; gap:10px">
+      <div style="display:flex; gap:10px">
+        <span class="video-status-badge ${statusMap[v.status]}" style="position:static">${v.status}</span>
+        <span style="font-size:12px; color:var(--text-muted); padding-top:3px">Platforms: ${v.platforms.length ? v.platforms.map(p => p.toUpperCase()).join(', ') : 'None yet'}</span>
+      </div>
+      ${v.yt_id ? `<div style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono',monospace">YouTube ID: <span style="color:var(--gold)">${v.yt_id}</span></div>` : ''}
+      <div style="padding:12px; background:var(--bg); border-radius:8px; border:1px solid var(--border); font-size:11px; color:var(--text-muted)">
+        output/published/2026-03-29/${v.created.replace(/[: ]/g,'').slice(0,14)}/${v.id}_video.mp4
+      </div>
+    </div>`;
+  document.getElementById('video-modal').classList.add('open');
+  
+  // Set up regen button
+  const regenBtn = document.getElementById('vmodal-regen-btn');
+  regenBtn.onclick = async () => {
+    regenBtn.disabled = true;
+    regenBtn.textContent = 'Optimizing...';
+    try {
+      const res = await fetch(`${API_BASE}/regenerate-title`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ video_id: v.id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('vmodal-title').textContent = data.new_title;
+        v.title = data.new_title;
+        v.is_ai_title = true;
+        toast('Title optimized successfully', 'success');
+        loadLiveData(); // Refresh background
+      } else {
+        toast(data.error || 'Optimization failed', 'error');
+      }
+    } catch (e) {
+      toast('Network error', 'error');
+    } finally {
+      regenBtn.disabled = false;
+      regenBtn.textContent = '↻ AI Title';
+    }
+  };
+}
+
+function closeVideoModal() { document.getElementById('video-modal').classList.remove('open'); }
+function publishVideo(id) { toast('Publishing video #' + id + ' to all platforms…'); }
+
+function confirmReset() {
+  document.getElementById('modal-title').textContent = 'Reset Engine?';
+  document.getElementById('modal-sub').textContent = 'This will clear the run log and reset cycle counters.';
+  document.getElementById('modal-detail').innerHTML = 'Videos in <strong>output/published/</strong> will not be deleted. The scheduler will restart fresh.';
+  document.getElementById('modal-confirm-btn').onclick = () => { closeModal(); toast('Engine reset', 'success'); };
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function clearLogs() { LOGS.length = 0; renderLogs('full-log'); toast('Logs cleared'); }
+
+function updateInterval(v) { document.getElementById('interval-val').textContent = v + 'h'; }
+
+function toast(msg, type='info') {
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function updateCountdown() {
+  const diff = nextRunDate - Date.now();
+  if (diff <= 0) { document.getElementById('countdown').textContent = 'Running…'; return; }
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  document.getElementById('countdown').textContent = `${String(h).padStart(1,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const nextTime = nextRunDate.toTimeString().slice(0,5);
+  document.getElementById('next-run-time').textContent = nextTime;
+}
+
+async function loadLiveData() {
+  try {
+    const [statusRes, videosRes, logsRes] = await Promise.all([
+      fetch('http://localhost:5050/api/status'),
+      fetch('http://localhost:5050/api/videos'),
+      fetch('http://localhost:5050/api/logs?limit=50')
+    ]);
+    
+    if (!statusRes.ok || !videosRes.ok) throw new Error('API error');
+    
+    const status = await statusRes.json();
+    const videos = await videosRes.json();
+    const logs = await logsRes.json();
+    
+    // Hide offline banner
+    const banner = document.getElementById('offline-banner');
+    if (banner) banner.style.display = 'none';
+    
+    // Update stats
+    document.getElementById('stat-total').textContent = videos.length;
+    document.getElementById('stat-published').textContent = 
+      videos.filter(v => v.status === 'published').length;
+    document.getElementById('stat-draft').textContent = 
+      videos.filter(v => v.status === 'draft').length;
+    
+    // Update engine status
+    const engineRunning = status.engine_running;
+    const btn = document.getElementById('engine-toggle-btn');
+    if (btn) {
+      btn.textContent = engineRunning ? '⏹ Stop Engine' : '▶ Start Engine';
+      btn.className = engineRunning ? 'btn btn-gold' : 'btn btn-outline';
+    }
+    
+    // Update next run countdown target
+    if (status.next_run_iso) {
+      nextRunDate = new Date(status.next_run_iso);
+    }
+    
+    // Render video grids with real data
+    // Replace the VIDEOS constant with live data
+    VIDEOS.length = 0;
+    videos.forEach((v) => VIDEOS.push({
+      id: v.id,
+      title: v.title,
+      is_ai_title: v.is_ai_title,
+      variant: 'live',
+      status: v.status,
+      duration: v.duration,
+      voice: '',
+      platforms: v.platforms_published || [],
+      created: v.date || '',
+      yt_id: v.yt_id,
+      views: 0
+    }));
+    
+    renderRecent();
+    renderLibrary();
+    
+    // Render logs
+    if (Array.isArray(logs)) {
+      LOGS.length = 0;
+      logs.forEach(l => LOGS.push(l));
+      renderLogs('full-log');
+    }
+    
+  } catch (err) {
+    console.error('API fetch failed:', err);
+    // Show offline banner
+    const banner = document.getElementById('offline-banner');
+    if (banner) banner.style.display = 'block';
+    
+    // Use fallback data
+    VIDEOS.length = 0;
+    MOCK_VIDEOS.forEach(v => VIDEOS.push(v));
+    LOGS.length = 0;
+    MOCK_LOGS.forEach(l => LOGS.push(l));
+    
+    updateStats();
+    renderRecent();
+    renderLibrary();
+    renderLogs('full-log');
+  }
+}
+
+function init() {
+  const now = new Date();
+  document.getElementById('current-date').textContent = now.toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) + ' · ' + now.toTimeString().slice(0,5);
+  
+  loadLiveData();
+  setInterval(loadLiveData, 30000); // Pulse every 30s
+  
+  setInterval(updateCountdown, 1000);
+  updateCountdown();
+}
+
+document.addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+  if (e.target === document.getElementById('video-modal')) closeVideoModal();
+});
+
+init();
+</script>
+</body>
+</html>

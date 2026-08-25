@@ -1,0 +1,87 @@
+niche:
+  primary: "reddit_mystery"
+  sub_variants:
+    - "family_drama"
+    - "betrayal_revenge"
+    - "dark_secret_revealed"
+    - "caught_cheating"
+    - "supernatural_encounter"
+
+video:
+  resolution: "1080x1920"
+  fps: 30
+  duration_min: 45
+  duration_max: 58
+  background_style: "random"
+  caption_style:
+    font: "Montserrat-Bold"
+    font_size: 52
+    color: "white"
+    stroke_color: "black"
+    stroke_width: 3
+    position: "center"
+    box_opacity: 0.0
+    words_per_caption: 4
+    highlight_current_word: true
+    highlight_color: "#FFD700"
+
+tts:
+  engine: "edge-tts"
+  voice: "en-US-ChristopherNeural"
+  backup_voice: "en-US-GuyNeural"
+  rate: "+10%"
+  pitch: "-5Hz"
+  volume: "+0%"
+
+music:
+  enabled: true
+  volume_percent: 12
+  fade_in_seconds: 2
+  fade_out_seconds: 3
+
+ollama:
+  model: "llama3.2"
+  temperature: 0.85
+  max_tokens: 800
+
+scheduling:
+  interval_hours: 4
+  platforms:
+    youtube: true
+    instagram: true
+    snapchat_email: true
+
+youtube:
+  category_id: "22"
+  privacy: "public"
+  tags:
+    - "shorts"
+    - "reddit"
+    - "mystery"
+    - "storytime"
+    - "minecraftparkour"
+    - "satisfying"
+    - "truestory"
+    - "drama"
+  description_template: |
+    🔴 WATCH TILL THE END — You won't believe this...
+    
+    #{title}
+    
+    #Shorts #Reddit #Mystery #Storytime #Drama #MinecraftParkour
+
+instagram:
+  reel_share_to_feed: true
+  caption_template: |
+    {hook_line} 👀
+    
+    Follow for daily stories that will SHOCK you 😱
+    
+    {hashtags}
+  hashtags: >
+    #reels #mystery #drama #storytime #reddit #foryou 
+    #fyp #viral #satisfying #minecraftparkour #shorts
+
+snapchat:
+  email_to: "your@email.com"
+  subject_template: "SNAP: {title} — Post Now"
