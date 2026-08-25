@@ -18,3 +18,5 @@ flask-cors
 pydantic-settings
 sqlalchemy
 alembic
+faster-whisper
+piper-tts

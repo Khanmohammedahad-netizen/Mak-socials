@@ -3,15 +3,16 @@ import json
 import random
 import yaml
 from datetime import datetime
-from ollama import Client
 from engine.utils.logger import logger
+from src.providers.llm.router import LLMRouter
+from src.providers.task_class import TaskClass
 
 class ScriptGenerator:
     def __init__(self, config_path: str = "config/config.yaml"):
         with open(config_path, "r") as f:
             self.config = yaml.safe_load(f)
-        
-        self.ollama_client = Client(host='http://localhost:11434')
+
+        self.llm_router = LLMRouter(ollama_model=self.config['ollama']['model'])
         self.scripts_dir = os.path.join("output", "scripts")
         self.hooks_file = os.path.join(self.scripts_dir, "used_hooks.json")
         
@@ -158,18 +159,16 @@ STRICT RULES — never break these:
         """
 
         try:
-            response = self.ollama_client.generate(
-                model=self.config['ollama']['model'],
+            script_text = self.llm_router.generate(
+                TaskClass.SCRIPT,
+                user_prompt,
                 system=system_prompt,
-                prompt=user_prompt,
                 options={
                     'temperature': self.config['ollama']['temperature'],
                     'num_predict': self.config['ollama']['max_tokens']
                 }
             )
-            
-            script_text = response['response'].strip()
-            
+
             # Post-processing
             if "Follow for more stories like this." not in script_text:
                 if not script_text.endswith("."):
@@ -195,12 +194,11 @@ Rules:
             """
             title_user = f"Write one title for this script: {script_text[:100]}"
             
-            title_response = self.ollama_client.generate(
-                model=self.config['ollama']['model'],
+            title = self.llm_router.generate(
+                TaskClass.TITLE,
+                title_user,
                 system=title_system,
-                prompt=title_user
-            )
-            title = title_response['response'].strip().replace('"', '')
+            ).replace('"', '')
 
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             script_filename = f"{timestamp}.txt"

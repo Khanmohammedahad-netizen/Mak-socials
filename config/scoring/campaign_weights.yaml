@@ -1,0 +1,26 @@
+# Campaign scorer weights — blueprint §4.1. Sum to 1.00.
+#
+# effective_rate, pool_freshness, pool_remaining, platform_overlap and
+# cap_headroom are computed deterministically from campaign data (see
+# src/clipping/campaign_scorer.py). clippability, brief_clarity and
+# payout_reliability cannot be derived from structured fields — the
+# blueprint's own factor table describes them in terms only a human
+# reading the brief can judge ("dense, quotable, punchy" source
+# material; "explicit do/don't" clarity; brand reputation). These three
+# are human-scored 0-10 at campaign intake time, same as the manual
+# intake step itself (§7.1: no public clipper-side API, so intake is
+# manual by design).
+
+effective_rate: 0.22
+pool_freshness: 0.20
+pool_remaining: 0.15
+clippability: 0.14
+brief_clarity: 0.10
+platform_overlap: 0.08
+cap_headroom: 0.06
+payout_reliability: 0.05
+
+fee_rate: 0.09
+default_expected_approval_rate: 0.85
+low_value_earnings_per_hour_inr: 400
+our_platforms: [youtube, instagram, facebook]

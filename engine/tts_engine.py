@@ -2,9 +2,9 @@ import os
 import asyncio
 import random
 import yaml
-import edge_tts
 from pydub import AudioSegment
 from engine.utils.logger import logger
+from src.providers.tts.router import TTSRouter
 
 class ScriptTooShortError(Exception):
     pass
@@ -23,6 +23,7 @@ class TTSEngine:
             "en-US-GuyNeural",
             "en-US-EricNeural"
         ]
+        self.tts_router = TTSRouter()
 
     async def generate_audio(self, script: str, timestamp: str):
         voice = random.choice(self.voices)
@@ -36,14 +37,9 @@ class TTSEngine:
         pitch = self.config['tts']['pitch']
         volume = self.config['tts']['volume']
         
-        communicate = edge_tts.Communicate(
-            script, 
-            voice, 
-            rate=rate, 
-            pitch=pitch, 
-            volume=volume
+        await self.tts_router.synthesize(
+            script, audio_path, voice=voice, rate=rate, pitch=pitch, volume=volume
         )
-        await communicate.save(audio_path)
         
         processed_path = self._post_process_audio(audio_path)
         duration = self._get_duration(processed_path)

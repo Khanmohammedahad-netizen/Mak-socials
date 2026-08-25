@@ -1,15 +1,16 @@
 import os
 import yaml
-from ollama import Client
 from engine.utils.logger import logger
+from src.providers.llm.router import LLMRouter
+from src.providers.task_class import TaskClass
 
 class TitleOptimizer:
     def __init__(self, config_path: str = "config/config.yaml"):
         with open(config_path, "r") as f:
             self.config = yaml.safe_load(f)
-        
-        self.ollama_client = Client(host='http://localhost:11434')
+
         self.model = self.config.get('ollama', {}).get('model', 'llama3.2')
+        self.llm_router = LLMRouter(ollama_model=self.model)
 
     def generate_optimized_title(self, story_text: str) -> str:
         """
@@ -30,16 +31,14 @@ class TitleOptimizer:
         
         try:
             logger.info("Optimizing video title with AI...")
-            response = self.ollama_client.chat(
-                model=self.model,
+            title = self.llm_router.chat(
+                TaskClass.TITLE,
                 messages=[
                     {'role': 'system', 'content': system_prompt},
                     {'role': 'user', 'content': f"Story: {story_text}"}
                 ],
                 options={'temperature': 0.7}
             )
-            
-            title = response['message']['content'].strip()
             # Clean up quotes
             title = title.replace('"', '').replace("'", "").strip()
             

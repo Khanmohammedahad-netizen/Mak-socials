@@ -34,5 +34,6 @@ build/
 # Generated output
 output/
 
-# Large binary asset — exceeds GitHub's 100MB file limit, not source-controlled
+# Large binary assets — not source-controlled, fetched by setup
 assets/backgrounds/
+assets/tts_models/

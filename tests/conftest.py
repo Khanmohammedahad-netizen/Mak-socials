@@ -26,3 +26,26 @@ def dashboard_client():
 
     dashboard_api.app.testing = True
     return dashboard_api.app.test_client()
+
+
+@pytest.fixture
+def db_session():
+    """An isolated in-memory SQLite DB, schema created fresh per test.
+    Never touches the real data/mak.db file. Every Phase 1+ function
+    that writes to the DB accepts an explicit `session` argument for
+    exactly this reason.
+    """
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    import src.core.models  # noqa: F401  registers tables on Base.metadata
+    from src.core.db import Base
+
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    session = sessionmaker(bind=engine)()
+    try:
+        yield session
+    finally:
+        session.close()
+        engine.dispose()

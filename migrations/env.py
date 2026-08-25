@@ -7,6 +7,7 @@ from sqlalchemy import engine_from_config, pool
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.core.db import DB_PATH, Base  # noqa: E402
+import src.core.models  # noqa: E402,F401  registers tables on Base.metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -18,9 +19,6 @@ config.set_main_option("sqlalchemy.url", f"sqlite:///{DB_PATH}")
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Phase 0: Base.metadata has zero tables (see src/core/db.py). Phase 1
-# adds the real models (identities, sources, rights_records, campaigns,
-# ...) and this baseline stays a correct, honest no-op against them.
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

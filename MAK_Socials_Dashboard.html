@@ -897,6 +897,17 @@
 
 <script>
 const API_BASE = 'http://localhost:5050/api';
+// Injected by the Flask '/' route at serve time (dashboard_api.py) — never
+// hardcoded here, never committed. See MAK_DASHBOARD_TOKEN in .env.
+window.MAK_TOKEN = "__MAK_DASHBOARD_TOKEN__";
+// /api/* routes require a bearer token (Phase 0 hardening — see docs/AUDIT.md
+// risk #3, an unauthenticated /api/run-now could trigger a real YouTube
+// upload). The '/' route templates the token in server-side; it never
+// leaves the machine since /api/* itself is bound to 127.0.0.1 only.
+function authFetch(url, opts = {}) {
+  opts.headers = { ...(opts.headers || {}), 'Authorization': `Bearer ${window.MAK_TOKEN || ''}` };
+  return fetch(url, opts);
+}
 let VIDEOS = [];
 let LOGS = [];
 
@@ -1005,7 +1016,7 @@ function updateStats() {
 
 async function toggleEngine() {
   try {
-    const res = await fetch(`${API_BASE}/engine/toggle`, { method: 'POST' });
+    const res = await authFetch(`${API_BASE}/engine/toggle`, { method: 'POST' });
     const data = await res.json();
     engineRunning = data.engine_running;
     
@@ -1034,7 +1045,7 @@ async function toggleEngine() {
 async function runNow() {
   try {
     toast('Pipeline triggered...');
-    const res = await fetch('http://localhost:5050/api/run-now', { method: 'POST' });
+    const res = await authFetch('http://localhost:5050/api/run-now', { method: 'POST' });
     const data = await res.json();
     if (data.started === true) {
       toast('Pipeline started successfully', 'success');
@@ -1070,7 +1081,7 @@ function openVideo(id) {
     regenBtn.disabled = true;
     regenBtn.textContent = 'Optimizing...';
     try {
-      const res = await fetch(`${API_BASE}/regenerate-title`, {
+      const res = await authFetch(`${API_BASE}/regenerate-title`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ video_id: v.id })
@@ -1134,9 +1145,9 @@ function updateCountdown() {
 async function loadLiveData() {
   try {
     const [statusRes, videosRes, logsRes] = await Promise.all([
-      fetch('http://localhost:5050/api/status'),
-      fetch('http://localhost:5050/api/videos'),
-      fetch('http://localhost:5050/api/logs?limit=50')
+      authFetch('http://localhost:5050/api/status'),
+      authFetch('http://localhost:5050/api/videos'),
+      authFetch('http://localhost:5050/api/logs?limit=50')
     ]);
     
     if (!statusRes.ok || !videosRes.ok) throw new Error('API error');

@@ -6,6 +6,15 @@ def test_html_route_open_no_auth(dashboard_client):
     assert resp.status_code == 200
 
 
+def test_html_route_injects_real_token_not_placeholder(dashboard_client):
+    """The dashboard page's own JS calls /api/* — it must actually be
+    able to authenticate itself, or every fetch in the UI silently 401s."""
+    resp = dashboard_client.get("/")
+    body = resp.get_data(as_text=True)
+    assert "__MAK_DASHBOARD_TOKEN__" not in body
+    assert settings.mak_dashboard_token in body
+
+
 def test_api_route_rejects_no_auth(dashboard_client):
     resp = dashboard_client.get("/api/status")
     assert resp.status_code == 401

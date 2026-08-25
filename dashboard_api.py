@@ -4,9 +4,8 @@ import time
 import threading
 import asyncio
 import glob
-from functools import wraps
 from datetime import datetime
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -15,26 +14,12 @@ from engine.scheduler import ViralEngine
 from engine.lib.title_optimizer import generate_optimized_title
 from engine.utils.logger import logger
 from src.core.config import settings
+from src.dashboard.auth import require_bearer_token
+from src.dashboard.money_campaigns import money_campaigns_bp
 
 app = Flask(__name__)
 CORS(app)
-
-
-def require_bearer_token(view):
-    """Guards /api/* routes. HTML routes (the dashboard page itself) stay
-    open for localhost use — only the API surface (including
-    /api/run-now, which triggers a real pipeline run + YouTube upload)
-    requires the token."""
-
-    @wraps(view)
-    def wrapped(*args, **kwargs):
-        auth = request.headers.get("Authorization", "")
-        expected = f"Bearer {settings.mak_dashboard_token}"
-        if auth != expected:
-            return jsonify({"error": "unauthorized"}), 401
-        return view(*args, **kwargs)
-
-    return wrapped
+app.register_blueprint(money_campaigns_bp)
 
 # Constants
 OUTPUT_DIR = "output"
@@ -64,7 +49,13 @@ def get_engine_status():
 
 @app.route('/')
 def dashboard():
-    return send_file('MAK_Socials_Dashboard.html')
+    with open('MAK_Socials_Dashboard.html', 'r', encoding='utf-8') as f:
+        html = f.read()
+    # The token stays server-side except for this one substitution: the
+    # page is only ever served on 127.0.0.1, to whoever is already sitting
+    # at this machine, and needs it to call the /api/* routes it renders.
+    html = html.replace('__MAK_DASHBOARD_TOKEN__', settings.mak_dashboard_token)
+    return html
 
 @app.route('/api/status', methods=['GET'])
 @require_bearer_token
